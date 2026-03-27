@@ -80,8 +80,8 @@
     .auth-btn:hover { transform: translateY(-2px); box-shadow: 0 16px 36px rgba(128,54,245,0.55); }
     .auth-error { color: var(--danger); margin-top: 16px; font-size: 14px; display: none; }
     
-    .edit-hidden { display: none !important; }
-    .edit-visible { display: inline-flex !important; }
+    .edit-hidden { display: none; }
+    .edit-visible { display: inline-flex; }
     
     .hero {
       margin-bottom: 28px;
@@ -301,11 +301,11 @@
         <p></p>
       </div>
       <div class="controls">
-        <button class="btn-edit edit-hidden" id="toggleEdit">Редактировать</button>
-        <button class="btn-add edit-hidden" id="openNewRow">Добавить</button>
-        <button class="btn-save" id="saveNewRow">Сохранить</button>
-        <button class="btn-cancel" id="cancelNewRow">Отмена</button>
-      </div>
+      <button class="btn-edit edit-hidden" id="toggleEdit">Редактировать</button>
+      <button class="btn-add edit-hidden" id="openNewRow">Добавить</button>
+      <button class="btn-save" id="saveNewRow">Сохранить</button>
+    <button class="btn-cancel" id="cancelNewRow">Отмена</button>
+</div>
     </div>
 
     <div class="panel">
@@ -343,300 +343,378 @@
   </div>
 
   <script>
-    const AUTH_DATA = atob('UmF6ZG9yOjIyODEzMzc=');
-    const [AUTH_LOGIN, AUTH_PASS] = AUTH_DATA.split(':');
-    
-    let isAuthenticated = localStorage.getItem('screenshot_auth') === 'true';
-    let db;
+let isAuthenticated = false;
+let db = null;
 
-    // LIGHTBOX: открытие скриншота на полный экран (ДОСТУПНО ВСЕМ)
-    const lightbox     = document.getElementById('lightbox');
-    const lightboxImg  = document.getElementById('lightboxImg');
+const AUTH_DATA = atob('UmF6ZG9yOjIyODEzMzc=');
+const [AUTH_LOGIN, AUTH_PASS] = AUTH_DATA.split(':');
 
-    function openLightbox(src) {
-      lightboxImg.src = src;
-      lightbox.classList.add('active');
-      document.body.style.overflow = 'hidden';
-    }
-    function closeLightbox() {
-      lightbox.classList.remove('active');
-      document.body.style.overflow = '';
-    }
-    lightbox.onclick = (e) => {
-      if (e.target === lightbox) closeLightbox();
+const GITHUB = {
+  OWNER:   "Razdor404",          
+  REPO:    "screenshots",
+  TOKEN:   "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",     
+  BRANCH:  "Razdor404.github.io-main",            
+
+  async fetchFile(path) {
+    const url = `https://api.github.com/repos/${this.OWNER}/${this.REPO}/contents/${path}`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const json = await res.json();
+    const content = atob(json.content);
+    return JSON.parse(content);
+  },
+
+  async getSha(path) {
+    const url = `https://api.github.com/repos/${this.OWNER}/${this.REPO}/contents/${path}`;
+    const res = await fetch(url);
+    return res.ok ? (await res.json()).sha : null;
+  },
+
+  async writeFile(path, content, message = "update screenshots list") {
+    const url = `https://api.github.com/repos/${this.OWNER}/${this.REPO}/contents/${path}`;
+
+    const data = {
+      message,
+      content: btoa(unescape(encodeURIComponent(JSON.stringify(content, null, 2)))),
+      branch: this.BRANCH
     };
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && lightbox.classList.contains('active')) {
-        closeLightbox();
-      }
+
+    const sha = await this.getSha(path);
+    if (sha) data.sha = sha;
+
+    const res = await fetch(url, {
+      method:  "PUT",
+      headers: {
+        Authorization: "Bearer " + this.TOKEN,
+        Accept:        "application/vnd.github.v3+json",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(data)
     });
 
-    function checkAuth() {
-      const login = document.getElementById('loginInput').value;
-      const pass = document.getElementById('passwordInput').value;
-      
-      if (login === AUTH_LOGIN && pass === AUTH_PASS) {
-        localStorage.setItem('screenshot_auth', 'true');
-        isAuthenticated = true;
-        document.getElementById('authModal').style.display = 'none';
-        document.getElementById('authToggle').textContent = 'Админ';
-        document.getElementById('authToggle').classList.add('authenticated');
-        showEditMode(true);
-        if (db) db.render();
-      } else {
-        document.getElementById('authError').style.display = 'block';
-        setTimeout(() => document.getElementById('authError').style.display = 'none', 3000);
-      }
+    if (!res.ok) {
+      const err = await res.text();
+      console.error("GitHub API error:", err);
     }
+    return res.ok;
+  }
+};
+
+function showEditMode(enable) {
+  // Показываем/скрываем кнопки редактирования
+  const editBtns = document.querySelectorAll('.edit-hidden');
+  editBtns.forEach(btn => {
+    btn.style.display = enable ? 'inline-flex' : 'none';
+  });
+}
+
+function openLightbox(src) {
+  const lightbox = document.getElementById('lightbox');
+  const img = document.getElementById('lightboxImg');
+  img.src = src;
+  lightbox.classList.add('active');
+}
+
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('active');
+}
+
+class ScreenshotDB {
+  constructor() {
+    db = this;
+    this.DATA_PATH = "data/data.json";
+    this.data = [];
+    this.editMode = false;
+    this.init();
+  }
+
+  async load() {
+    const saved = await GITHUB.fetchFile(this.DATA_PATH);
+    return Array.isArray(saved) ? saved : [];
+  }
+
+  async save() {
+    const ok = await GITHUB.writeFile(this.DATA_PATH, this.data, "update screenshots list");
+    if (ok) this.status("Сохранено", "success");
+  }
+
+  status(msg, type = 'success') {
+    const el = document.getElementById('status');
+    if (!el) return;
+    el.textContent = msg;
+    el.className = `status ${type}`;
+    el.style.display = 'block';
+    setTimeout(() => el.style.display = 'none', 2500);
+  }
+
+  async init() {
+    this.data = await this.load();
+    this.render();
     
-    function showEditMode(show) {
-      const editElements = document.querySelectorAll('.edit-hidden');
-      editElements.forEach(el => {
-        el.classList.toggle('edit-hidden', !show);
-        el.classList.toggle('edit-visible', show);
+    // ✅ ПРИВЯЗЫВАЕМ ОБРАБОТЧИКИ ТОЛЬКО ЕСЛИ АДМИН ВОШЁЛ
+    if (isAuthenticated) {
+      this.bindButtons();
+    }
+
+    this.bindPreview();
+  }
+
+  bindButtons() {
+    document.getElementById('toggleEdit').onclick = () => this.toggleEdit();
+    document.getElementById('openNewRow').onclick = () => this.newForm();
+    document.getElementById('saveNewRow').onclick = () => this.saveNew();
+    document.getElementById('cancelNewRow').onclick = () => this.cancelNew();
+  }
+
+  bindPreview() {
+    const previewBox = document.getElementById('newPreviewBox');
+    const fileInput  = document.getElementById('newImageInput');
+    previewBox.onclick = () => fileInput.click();
+
+    fileInput.onchange = (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const img   = document.getElementById('newPreviewImg');
+      const text  = document.getElementById('newPreviewText');
+      const reader = new FileReader();
+
+      reader.onload = (ev) => {
+        img.src = ev.target.result;
+        img.style.display = 'block';
+        text.style.display = 'none';
+      };
+      reader.onerror = () => this.status('Ошибка загрузки изображения', 'error');
+      reader.readAsDataURL(file);
+    };
+  }
+
+  async saveNew() {
+    const title = document.getElementById('newTitle').value.trim();
+    const desc  = document.getElementById('newDescription').value.trim();
+    const file  = document.getElementById('newImageInput').files[0];
+
+    if (!title || !file) {
+      this.status('Название и скриншот обязательны');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      this.data.push({
+        title,
+        description: desc,
+        image: e.target.result
       });
+      await this.save();
+      this.render();
+      this.cancelNew();
+    };
+    reader.onerror = () => this.status('Ошибка чтения изображения', 'error');
+    reader.readAsDataURL(file);
+  }
 
-      if (isAuthenticated && db) {
-        document.getElementById('toggleEdit').onclick = () => db.toggleEdit();
-        document.getElementById('openNewRow').onclick   = () => db.newForm();
-        document.getElementById('saveNewRow').onclick   = () => db.saveNew();
-        document.getElementById('cancelNewRow').onclick = () => db.cancelNew();
-      }
-    }
-    
-    document.getElementById('authToggle').onclick = () => {
-      if (isAuthenticated) {
-        if (confirm('Выйти из админки?')) {
-          localStorage.removeItem('screenshot_auth');
-          isAuthenticated = false;
-          document.getElementById('authToggle').textContent = 'Авторизация';
-          document.getElementById('authToggle').classList.remove('authenticated');
-          showEditMode(false);
-          document.getElementById('authModal').style.display = 'none';
-        }
-      } else {
-        document.getElementById('authModal').style.display = 'flex';
-        document.getElementById('loginInput').focus();
+  render() {
+    const rows = document.getElementById('rows');
+    if (!rows) return;
+
+    rows.innerHTML = this.data.length
+      ? ''
+      : '<div style="padding:60px;text-align:center;color:var(--muted);">Добавьте первый скриншот</div>';
+
+    this.data.forEach((item, i) => {
+      const row = document.createElement('div');
+      row.className = 'row';
+      row.innerHTML = `
+        <div class="name-cell">
+         <div class="title cell-title" contentEditable="${this.editMode && isAuthenticated ? 'true' : 'false'}">
+           ${this.escape(item.title)}
+         </div>
+        </div>
+        <div>
+         <img class="thumb cell-image" src="${item.image}" alt="${item.title}" onclick="openLightbox('${item.image}')">
+         <input class="hidden-file row-file" type="file" accept="image/*">
+        </div>
+        <div>
+         <div class="description cell-description" contentEditable="false">
+           ${item.description || ''}
+         </div>
+        </div>
+        <div class="actions">
+         <button class="icon-btn edit-row-btn ${!isAuthenticated ? 'edit-hidden' : ''}">Ред.</button>
+         <button class="icon-btn delete-row-btn ${!isAuthenticated ? 'edit-hidden' : ''}">Удалить</button>
+        </div>
+      `;
+      rows.appendChild(row);
+      if (isAuthenticated) this.bindRow(row, i, item);
+    });
+  }
+
+  bindRow(row, i, item) {
+    const title = row.querySelector('.cell-title');
+    const img   = row.querySelector('.cell-image');
+    const file  = row.querySelector('.row-file');
+    const edit  = row.querySelector('.edit-row-btn');
+    const del   = row.querySelector('.delete-row-btn');
+    const desc  = row.querySelector('.cell-description');
+
+    img.onclick = () => openLightbox(img.src);
+
+    title.onclick = () => {
+      if (this.editMode) {
+        title.contentEditable = true;
+        title.focus();
       }
     };
-    
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && document.getElementById('authModal').style.display !== 'none') {
-        checkAuth();
+    title.onblur = async () => {
+      item.title = (title.textContent || '').trim() || item.title;
+      await this.save();
+      title.contentEditable = false;
+    };
+    title.onkeydown = (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        title.blur();
       }
-    });
+    };
 
-    class ScreenshotDB {
-      constructor() {
-        db = this;
-        this.DB_NAME = 'github_screenshots_v1';
-        this.data = this.load();
-        this.editMode = false;
-        this.init();
-      }
+    file.onchange = async (e) => {
+      const f = e.target.files[0];
+      if (!f) return;
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        this.data[i].image = ev.target.result;
+        await this.save();
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(f);
+    };
 
-      load() { try { return JSON.parse(localStorage.getItem(this.DB_NAME)) || []; } catch { return []; } }
-      save() { localStorage.setItem(this.DB_NAME, JSON.stringify(this.data)); this.status('Сохранено', 'success'); }
-
-      status(msg, type) {
-        const el = document.getElementById('status');
-        el.textContent = msg; el.className = `status ${type}`; el.style.display = 'block';
-        setTimeout(() => el.style.display = 'none', 2500);
-      }
-
-      init() {
-        this.render();
-        
-        if (isAuthenticated) {
-          document.getElementById('toggleEdit').onclick     = () => this.toggleEdit();
-          document.getElementById('openNewRow').onclick     = () => this.newForm();
-          document.getElementById('saveNewRow').onclick     = () => this.saveNew();
-          document.getElementById('cancelNewRow').onclick   = () => this.cancelNew();
-        }
-
-        const previewBox = document.getElementById('newPreviewBox');
-        const fileInput  = document.getElementById('newImageInput');
-
-        previewBox.onclick = () => fileInput.click();
-
-        fileInput.onchange = (e) => {
-          const file = e.target.files[0];
-          if (!file) return;
-
-          const img   = document.getElementById('newPreviewImg');
-          const text  = document.getElementById('newPreviewText');
-          const reader = new FileReader();
-
-          reader.onload = (ev) => {
-            const result = ev.target.result;
-            img.src        = result;
-            img.style.display = 'block';
-            text.style.display = 'none';
-          };
-          reader.onerror = () => {
-            this.status('Ошибка загрузки изображения', 'error');
-          };
-          reader.readAsDataURL(file);
-        };
-      }
-
-      toggleEdit() {
-        this.editMode = !this.editMode;
-        document.getElementById('toggleEdit').textContent = this.editMode ? 'Завершить' : 'Редактировать';
-        document.getElementById('openNewRow').style.display = this.editMode ? 'inline-flex' : 'none';
-        if (!this.editMode) this.cancelNew();
-      }
-
-      newForm() {
-        document.getElementById('newRowForm').classList.add('active');
-        document.getElementById('saveNewRow').style.display = 'inline-flex';
-        document.getElementById('cancelNewRow').style.display = 'inline-flex';
-        document.getElementById('newTitle').focus();
-      }
-
-      cancelNew() {
-        document.getElementById('newRowForm').classList.remove('active');
-        document.getElementById('saveNewRow').style.display = 'none';
-        document.getElementById('cancelNewRow').style.display = 'none';
-        this.resetForm();
-      }
-
-      resetForm() {
-        document.getElementById('newTitle').value = '';
-        document.getElementById('newDescription').value = '';
-        document.getElementById('newImageInput').value = '';
-        document.getElementById('newPreviewImg').style.display = 'none';
-        document.getElementById('newPreviewText').style.display = 'block';
-        document.getElementById('newPreviewImg').src = '';
-      }
-
-      saveNew() {
-        const title = document.getElementById('newTitle').value.trim();
-        const desc = document.getElementById('newDescription').value.trim();
-        const file = document.getElementById('newImageInput').files[0];
-        
-        if (!title || !file) { this.status('Название и скриншот обязательны'); return; }
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          this.data.push({ title, description: desc, image: e.target.result });
-          this.save(); this.render(); this.cancelNew();
-        };
-        reader.onerror = () => {
-          this.status('Ошибка чтения изображения', 'error');
-        };
-        reader.readAsDataURL(file);
-      }
-
-      render() {
-        const rows = document.getElementById('rows');
-        rows.innerHTML = this.data.length ? '' : '<div style="padding:60px;text-align:center;color:var(--muted);">Добавьте первый скриншот</div>';
-
-        this.data.forEach((item, i) => {
-          const row = document.createElement('div');
-          row.className = 'row';
-          row.innerHTML = `
-            <div class="name-cell">
-              <div class="title cell-title" contentEditable="${this.editMode && isAuthenticated}">${this.escape(item.title)}</div>
-            </div>
-            <div>
-              <img class="thumb cell-image" src="${item.image}" alt="${item.title}">
-              <input class="hidden-file row-file" type="file" accept="image/*">
-            </div>
-            <div>
-              <div class="description cell-description" contentEditable="false">${item.description||''}</div>
-            </div>
-            <div class="actions">
-              <button class="icon-btn edit-row-btn ${!isAuthenticated ? 'edit-hidden' : ''}">Ред.</button>
-              <button class="icon-btn delete-row-btn ${!isAuthenticated ? 'edit-hidden' : ''}">Удалить</button>
-            </div>`;
-          rows.appendChild(row);
-          this.bindRow(row, i, item);
-        });
-      }
-
-      bindRow(row, i, item) {
-        const title = row.querySelector('.cell-title');
-        const img   = row.querySelector('.cell-image');
-        const file  = row.querySelector('.row-file');
-        const edit  = row.querySelector('.edit-row-btn');
-        const del   = row.querySelector('.delete-row-btn');
-        const desc  = row.querySelector('.cell-description');
-
-        // ✅ Lightbox работает ДЛЯ ВСЕХ пользователей
-        img.onclick = () => openLightbox(img.src);
-
-        // Остальной админ функционал только для авторизованных
-        if (isAuthenticated) {
-          title.onclick = () => { if (this.editMode) { title.contentEditable = true; title.focus(); } };
-          title.onblur = () => {
-            item.title = title.textContent.trim() || item.title;
-            title.contentEditable = false;
-            this.save();
-          };
-          title.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); title.blur(); } };
-
-          file.onchange = (e) => {
-            const f = e.target.files[0];
-            if (!f) return;
-
-            const r = new FileReader();
-            r.onload = (ev) => { 
-              this.data[i].image = ev.target.result; 
-              this.save(); 
-              img.src = ev.target.result; 
-            };
-            r.onerror = () => {
-              this.status('Ошибка загрузки изображения для этого элемента');
-            };
-            r.readAsDataURL(f);
-          };
-
-          edit.onclick = () => {
-            if (!this.editMode) return;
-            const editing = desc.contentEditable === 'true';
-            if (editing) {
-              this.data[i].description = desc.textContent.trim();
-              this.save();
-              desc.contentEditable = 'false';
-              edit.textContent = 'Ред.';
-            } else {
-              desc.contentEditable = 'true';
-              desc.focus();
-              edit.textContent = 'Сохранить';
-            }
-          };
-
-          del.onclick = () => {
-            if (confirm(`Удалить "${item.title}"?`)) {
-              this.data.splice(i, 1);
-              this.save();
-              this.render();
-            }
-          };
-        }
-      }
-
-      escape(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-      }
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      new ScreenshotDB();
-    });
-
-    (function initAfterAuth() {
-      if (isAuthenticated) {
-        document.getElementById('authToggle').textContent = 'Админ';
-        document.getElementById('authToggle').classList.add('authenticated');
-        showEditMode(true);
+    edit.onclick = async () => {
+      if (!this.editMode) return;
+      const editing = desc.contentEditable === 'true';
+      if (editing) {
+        this.data[i].description = (desc.textContent || '').trim();
+        await this.save();
+        desc.contentEditable = 'false';
+        edit.textContent = 'Ред.';
       } else {
-        showEditMode(false);
+        desc.contentEditable = 'true';
+        desc.focus();
+        edit.textContent = 'Сохранить';
       }
-    })();
-  </script>
+    };
+
+    del.onclick = async () => {
+      if (confirm(`Удалить "${item.title}"?`)) {
+        this.data.splice(i, 1);
+        await this.save();
+        this.render();
+      }
+    };
+  }
+
+  toggleEdit() {
+    this.editMode = !this.editMode;
+    const btn = document.getElementById('toggleEdit');
+    btn.textContent = this.editMode ? 'Завершить' : 'Редактировать';
+    document.getElementById('openNewRow').style.display = this.editMode ? 'inline-flex' : 'none';
+    if (!this.editMode) this.cancelNew();
+    this.render(); // Перерисовка для обновления contentEditable
+  }
+
+  newForm() {
+    document.getElementById('newRowForm').classList.add('active');
+    document.getElementById('saveNewRow').style.display = 'inline-flex';
+    document.getElementById('cancelNewRow').style.display = 'inline-flex';
+    document.getElementById('newTitle').focus();
+  }
+
+  cancelNew() {
+    document.getElementById('newRowForm').classList.remove('active');
+    document.getElementById('saveNewRow').style.display = 'none';
+    document.getElementById('cancelNewRow').style.display = 'none';
+    this.resetForm();
+  }
+
+  resetForm() {
+    document.getElementById('newTitle').value = '';
+    document.getElementById('newDescription').value = '';
+    document.getElementById('newImageInput').value = '';
+    document.getElementById('newPreviewImg').style.display = 'none';
+    document.getElementById('newPreviewText').style.display = 'block';
+  }
+
+  escape(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+}
+
+// ✅ ИНИЦИАЛИЗАЦИЯ
+document.addEventListener('DOMContentLoaded', () => {
+  // Проверяем сохранённую авторизацию
+  if (localStorage.getItem('auth') === 'true') {
+    isAuthenticated = true;
+    const btn = document.getElementById('authToggle');
+    btn.textContent = 'Админ';
+    btn.classList.add('authenticated');
+    showEditMode(true);
+  }
+
+  // Обработчик кнопки авторизации
+  document.getElementById('authToggle').onclick = () => {
+    if (isAuthenticated) {
+      if (confirm('Выйти из админки?')) {
+        isAuthenticated = false;
+        localStorage.removeItem('auth');
+        const btn = document.getElementById('authToggle');
+        btn.textContent = 'Авторизация';
+        btn.classList.remove('authenticated');
+        showEditMode(false);
+        if (db) db.render();
+      }
+    } else {
+      document.getElementById('authModal').style.display = 'flex';
+    }
+  };
+
+  // Закрытие модалки по клику вне панели
+  document.getElementById('authModal').onclick = (e) => {
+    if (e.target.id === 'authModal') {
+      document.getElementById('authModal').style.display = 'none';
+    }
+  };
+
+  new ScreenshotDB();
+});
+
+function checkAuth() {
+  const login = document.getElementById('loginInput').value.trim();
+  const pass  = document.getElementById('passwordInput').value.trim();
+  const error = document.getElementById('authError');
+
+  if (login === AUTH_LOGIN && pass === AUTH_PASS) {
+    isAuthenticated = true;
+    localStorage.setItem('auth', 'true');
+    document.getElementById('authModal').style.display = 'none';
+    
+    const btn = document.getElementById('authToggle');
+    btn.textContent = 'Админ';
+    btn.classList.add('authenticated');
+    
+    showEditMode(true);
+    
+    // ✅ ПЕРЕИНИЦИАЛИЗИРУЕМ КНОПКИ ПОСЛЕ ВХОДА
+    if (db) {
+      db.bindButtons();
+      db.render();
+    }
+  } else {
+    error.style.display = 'block';
+    setTimeout(() => error.style.display = 'none', 2500);
+  }
+}
+</script>
 </body>
 </html>
