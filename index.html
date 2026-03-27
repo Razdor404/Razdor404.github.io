@@ -29,11 +29,36 @@
     }
     .wrap { max-width: 1800px; margin: 0 auto; }
     
+    /* ✅ КНОПКА АВТОРИЗАЦИИ СПРАВА */
+    .auth-btn-fixed {
+      position: fixed; top: 32px; right: 32px; z-index: 9999;
+      background: linear-gradient(135deg, var(--accent), #9333ea);
+      border: 0; border-radius: 50px; padding: 16px 24px; 
+      color: white; font: inherit; font-weight: 700; font-size: 14px;
+      box-shadow: 0 16px 40px rgba(124,58,237,0.4); cursor: pointer;
+      transition: all 0.3s ease; backdrop-filter: blur(20px);
+    }
+    .auth-btn-fixed:hover { 
+      transform: translateY(-4px) scale(1.05); 
+      box-shadow: 0 24px 60px rgba(124,58,237,0.6); 
+    }
+    .auth-btn-fixed.authenticated {
+      background: linear-gradient(135deg, var(--success), #16a34a);
+      animation: pulse 2s infinite;
+    }
+    .auth-btn-fixed.authenticated:hover {
+      box-shadow: 0 24px 60px rgba(34,197,94,0.6);
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 16px 40px rgba(34,197,94,0.4); }
+      50% { box-shadow: 0 16px 40px rgba(34,197,94,0.7); }
+    }
+    
     /* Модальное окно авторизации */
     .auth-modal {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-      background: rgba(0,0,0,0.9); z-index: 10000; display: flex; align-items: center; justify-content: center;
-      backdrop-filter: blur(10px);
+      background: rgba(0,0,0,0.9); z-index: 10000; display: none; 
+      align-items: center; justify-content: center; backdrop-filter: blur(20px);
     }
     .auth-panel {
       background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); 
@@ -46,20 +71,22 @@
       width: 100%; border: 1px solid rgba(255,255,255,0.1); background: rgba(6,10,20,0.55); 
       color: #fff; border-radius: 14px; padding: 18px 20px; font-size: 16px; box-sizing: border-box;
     }
-    .auth-field input:focus { border-color: var(--accent2); box-shadow: 0 0 0 3px rgba(6,182,212,0.14); outline: none; }
+    .auth-field input:focus { 
+      border-color: var(--accent2); box-shadow: 0 0 0 3px rgba(6,182,212,0.14); outline: none; 
+    }
     .auth-btn {
       width: 100%; border: 0; border-radius: 16px; padding: 18px; font: inherit; font-weight: 700; 
-      color: white; cursor: pointer; background: linear-gradient(135deg, var(--accent), #9333ea);
-      box-shadow: 0 12px 28px rgba(124,58,237,0.4); transition: all 0.2s ease;
+      color: white; cursor: pointer; background: linear-gradient(135deg, var(--accent2), #0891b2);
+      box-shadow: 0 12px 28px rgba(6,182,212,0.4); transition: all 0.2s ease;
     }
-    .auth-btn:hover { transform: translateY(-2px); box-shadow: 0 16px 36px rgba(124,58,237,0.5); }
+    .auth-btn:hover { transform: translateY(-2px); box-shadow: 0 16px 36px rgba(6,182,212,0.5); }
     .auth-error { color: var(--danger); margin-top: 16px; font-size: 14px; display: none; }
     
-    /* Скрываем редактирование */
+    /* Скрываем редактирование без авторизации */
     .edit-hidden { display: none !important; }
     .edit-visible { display: inline-flex !important; }
     
-    /* Основные стили (без изменений) */
+    /* Основные стили */
     .table-head { 
       display: grid; 
       grid-template-columns: 1.5fr 500px 2.5fr 140px;
@@ -109,7 +136,7 @@
       transition: all 0.3s ease; 
     }
     .thumb:hover { 
-      transform: scale(1.02) !important; 
+      transform:scale(1.02) !important; 
       border-color: rgba(6, 182, 212, 0.7); 
       box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5); 
     }
@@ -156,6 +183,7 @@
     .status { padding: 14px; border-radius: 12px; margin-top: 20px; font-size: 15px; display: none; }
     .status.success { background: rgba(34, 197, 94, 0.2); border: 1px solid var(--success); color: var(--success); }
     
+    /* Адаптивность */
     @media (max-width: 1400px) { .table-head, .row { grid-template-columns: 1fr 420px 2fr 120px; } .thumb { width: 420px; height: 250px; } }
     @media (max-width: 1100px) { .table-head, .row { grid-template-columns: 1fr 350px 2fr 120px; } .thumb { width: 350px; height: 210px; } }
     @media (max-width: 920px) { 
@@ -163,14 +191,18 @@
       .form-grid { grid-template-columns: 1fr; }
       .thumb { width: 100%; height: 300px; }
       .preview-box { height: 280px; }
+      .auth-btn-fixed { top: 20px; right: 20px; padding: 14px 20px; font-size: 13px; }
     }
   </style>
 </head>
 <body>
+  <!-- ✅ КНОПКА АВТОРИЗАЦИИ СПРАВА -->
+  <button id="authToggle" class="auth-btn-fixed">🔐 Авторизация</button>
+  
   <!-- Модальное окно авторизации -->
   <div id="authModal" class="auth-modal">
     <div class="auth-panel">
-      <h2>🔐 Авторизация</h2>
+      <h2>🔐 Вход в админку</h2>
       <div class="auth-field">
         <input type="text" id="loginInput" placeholder="Логин" maxlength="20">
       </div>
@@ -189,8 +221,8 @@
         <p>🖼️ Огромные скриншоты 500x300 • Редактирование названий • localStorage база</p>
       </div>
       <div class="controls">
-        <button class="btn-edit" id="toggleEdit">Редактировать</button>
-        <button class="btn-add" id="openNewRow">Добавить</button>
+        <button class="btn-edit edit-hidden" id="toggleEdit">Редактировать</button>
+        <button class="btn-add edit-hidden" id="openNewRow">Добавить</button>
         <button class="btn-save" id="saveNewRow">Сохранить</button>
         <button class="btn-cancel" id="cancelNewRow">Отмена</button>
       </div>
@@ -201,7 +233,7 @@
         <div>Название</div><div>Скриншот</div><div>Класснеймы</div><div>Действия</div>
       </div>
 
-      <div id="newRowForm" class="new-row">
+      <div id="newRowForm" class="new-row edit-hidden">
         <div class="form-grid">
          <div class="field">
            <label>Название *</label>
@@ -228,7 +260,7 @@
   </div>
 
   <script>
-    // Скрытые учетные данные (закодированы в base64 для минимальной маскировки)
+    // Скрытые учетные данные (base64)
     const AUTH_DATA = atob('UmF6ZG9yOjIyODEzMzc='); // "Razdor:2281337"
     const [AUTH_LOGIN, AUTH_PASS] = AUTH_DATA.split(':');
     
@@ -243,29 +275,60 @@
         localStorage.setItem('screenshot_auth', 'true');
         isAuthenticated = true;
         document.getElementById('authModal').style.display = 'none';
-        new ScreenshotDB(); // Инициализация после авторизации
+        document.getElementById('authToggle').textContent = '✅ Админ';
+        document.getElementById('authToggle').classList.add('authenticated');
+        showEditMode(true);
+        if (window.db) window.db.render(); // Перерисовка если уже инициализировано
       } else {
         document.getElementById('authError').style.display = 'block';
         setTimeout(() => document.getElementById('authError').style.display = 'none', 3000);
       }
     }
     
-    // Показать модальное окно при загрузке, если не авторизован
-    if (!isAuthenticated) {
-      document.getElementById('authModal').style.display = 'flex';
-      document.querySelector('.wrap').style.display = 'none';
-    } else {
-      document.getElementById('authModal').style.display = 'none';
-      new ScreenshotDB();
+    // Показать/скрыть режим редактирования
+    function showEditMode(show) {
+      const editElements = document.querySelectorAll('.edit-hidden');
+      editElements.forEach(el => {
+        el.classList.toggle('edit-hidden', !show);
+        el.classList.toggle('edit-visible', show);
+      });
     }
+    
+    // Инициализация кнопки авторизации
+    document.getElementById('authToggle').onclick = () => {
+      if (isAuthenticated) {
+        // Выход из аккаунта
+        if (confirm('Выйти из админки?')) {
+          localStorage.removeItem('screenshot_auth');
+          isAuthenticated = false;
+          document.getElementById('authToggle').textContent = '🔐 Авторизация';
+          document.getElementById('authToggle').classList.remove('authenticated');
+          showEditMode(false);
+          document.getElementById('authModal').style.display = 'none';
+        }
+      } else {
+        document.getElementById('authModal').style.display = 'flex';
+        document.getElementById('loginInput').focus();
+      }
+    };
     
     // Enter для авторизации
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !isAuthenticated) checkAuth();
+      if (e.key === 'Enter' && document.getElementById('authModal').style.display !== 'none') {
+        checkAuth();
+      }
     });
+    
+    // Инициализация при загрузке
+    if (isAuthenticated) {
+      document.getElementById('authToggle').textContent = '✅ Админ';
+      document.getElementById('authToggle').classList.add('authenticated');
+      showEditMode(true);
+    }
 
     class ScreenshotDB {
       constructor() {
+        window.db = this; // Глобальная ссылка для checkAuth
         this.DB_NAME = 'github_screenshots_v1';
         this.data = this.load();
         this.editMode = false;
@@ -283,10 +346,12 @@
 
       init() {
         this.render();
-        document.getElementById('toggleEdit').onclick = () => this.toggleEdit();
-        document.getElementById('openNewRow').onclick = () => this.newForm();
-        document.getElementById('saveNewRow').onclick = () => this.saveNew();
-        document.getElementById('cancelNewRow').onclick = () => this.cancelNew();
+        if (isAuthenticated) {
+          document.getElementById('toggleEdit').onclick = () => this.toggleEdit();
+          document.getElementById('openNewRow').onclick = () => this.newForm();
+          document.getElementById('saveNewRow').onclick = () => this.saveNew();
+          document.getElementById('cancelNewRow').onclick = () => this.cancelNew();
+        }
         
         document.getElementById('newPreviewBox').onclick = () => document.getElementById('newImageInput').click();
         document.getElementById('newImageInput').onchange = (e) => {
@@ -355,13 +420,19 @@
           const row = document.createElement('div');
           row.className = 'row';
           row.innerHTML = `
-            <div class="name-cell"><div class="title cell-title" contentEditable="${this.editMode}">${this.escape(item.title)}</div></div>
-            <div><img class="thumb cell-image" src="${item.image}" alt="${item.title}">
-            <input class="hidden-file row-file" type="file" accept="image/*"></div>
-            <div><div class="description cell-description" contentEditable="false">${item.description||''}</div></div>
+            <div class="name-cell">
+              <div class="title cell-title" contentEditable="${this.editMode && isAuthenticated}">${this.escape(item.title)}</div>
+            </div>
+            <div>
+              <img class="thumb cell-image" src="${item.image}" alt="${item.title}">
+              <input class="hidden-file row-file" type="file" accept="image/*">
+            </div>
+            <div>
+              <div class="description cell-description" contentEditable="false">${item.description||''}</div>
+            </div>
             <div class="actions">
-              <button class="icon-btn edit-row-btn">Ред.</button>
-              <button class="icon-btn delete-row-btn">Удалить</button>
+              <button class="icon-btn edit-row-btn ${!isAuthenticated ? 'edit-hidden' : ''}">Ред.</button>
+              <button class="icon-btn delete-row-btn ${!isAuthenticated ? 'edit-hidden' : ''}">Удалить</button>
             </div>`;
           rows.appendChild(row);
           this.bindRow(row, i, item);
@@ -376,46 +447,53 @@
         const del = row.querySelector('.delete-row-btn');
         const desc = row.querySelector('.cell-description');
 
-        title.onclick = () => { if (this.editMode) { title.contentEditable = true; title.focus(); } };
-        title.onblur = () => {
-          item.title = title.textContent.trim() || item.title;
-          title.contentEditable = false;
-          this.save();
-        };
-        title.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); title.blur(); } };
-
-        img.onclick = () => { if (this.editMode) file.click(); };
-        file.onchange = (e) => {
-          const f = e.target.files[0];
-          if (f) {
-            const r = new FileReader();
-            r.onload = (ev) => { this.data[i].image = ev.target.result; this.save(); img.src = ev.target.result; };
-            r.readAsDataURL(f);
-          }
-        };
-
-        edit.onclick = () => {
-          if (!this.editMode) return;
-          const editing = desc.contentEditable === 'true';
-          if (editing) {
-            this.data[i].description = desc.textContent.trim();
+        // Редактирование названия только для авторизованных
+        if (isAuthenticated) {
+          title.onclick = () => { if (this.editMode) { title.contentEditable = true; title.focus(); } };
+          title.onblur = () => {
+            item.title = title.textContent.trim() || item.title;
+            title.contentEditable = false;
             this.save();
-            desc.contentEditable = 'false';
-            edit.textContent = 'Ред.';
-          } else {
-            desc.contentEditable = 'true';
-            desc.focus();
-            edit.textContent = 'Сохранить';
-          }
-        };
+          };
+          title.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); title.blur(); } };
 
-        del.onclick = () => {
-          if (confirm(`Удалить "${item.title}"?`)) {
-            this.data.splice(i, 1);
-            this.save();
-            this.render();
-          }
-        };
+          img.onclick = () => { if (this.editMode) file.click(); };
+          file.onchange = (e) => {
+            const f = e.target.files[0];
+            if (f) {
+              const r = new FileReader();
+              r.onload = (ev) => { 
+                this.data[i].image = ev.target.result; 
+                this.save(); 
+                img.src = ev.target.result; 
+              };
+              r.readAsDataURL(f);
+            }
+          };
+
+          edit.onclick = () => {
+            if (!this.editMode) return;
+            const editing = desc.contentEditable === 'true';
+            if (editing) {
+              this.data[i].description = desc.textContent.trim();
+              this.save();
+              desc.contentEditable = 'false';
+              edit.textContent = 'Ред.';
+            } else {
+              desc.contentEditable = 'true';
+              desc.focus();
+              edit.textContent = 'Сохранить';
+            }
+          };
+
+          del.onclick = () => {
+            if (confirm(`Удалить "${item.title}"?`)) {
+              this.data.splice(i, 1);
+              this.save();
+              this.render();
+            }
+          };
+        }
       }
 
       escape(text) {
@@ -424,6 +502,11 @@
         return div.innerHTML;
       }
     }
+
+    // Запуск после загрузки DOM
+    document.addEventListener('DOMContentLoaded', () => {
+      new ScreenshotDB();
+    });
   </script>
 </body>
 </html>
