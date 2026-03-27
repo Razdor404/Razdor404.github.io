@@ -196,13 +196,13 @@
   </style>
 </head>
 <body>
-  <!-- ✅ КНОПКА АВТОРИЗАЦИИ СПРАВА -->
-  <button id="authToggle" class="auth-btn-fixed">🔐 Авторизация</button>
+  <!--  КНОПКА АВТОРИЗАЦИИ СПРАВА -->
+  <button id="authToggle" class="auth-btn-fixed"> Авторизация</button>
   
   <!-- Модальное окно авторизации -->
   <div id="authModal" class="auth-modal">
     <div class="auth-panel">
-      <h2>🔐 Вход в админку</h2>
+      <h2> Вход в админку</h2>
       <div class="auth-field">
         <input type="text" id="loginInput" placeholder="Логин" maxlength="20">
       </div>
@@ -210,7 +210,7 @@
         <input type="password" id="passwordInput" placeholder="Пароль" maxlength="20">
       </div>
       <button class="auth-btn" onclick="checkAuth()">Войти</button>
-      <div id="authError" class="auth-error">❌ Неверный логин или пароль!</div>
+      <div id="authError" class="auth-error"> Неверный логин или пароль!</div>
     </div>
   </div>
 
@@ -218,7 +218,7 @@
     <div class="hero">
       <div class="title-block">
         <h1>Класснеймы донат вещей</h1>
-        <p>🖼️ Огромные скриншоты 500x300 • Редактирование названий • localStorage база</p>
+        <p></p>
       </div>
       <div class="controls">
         <button class="btn-edit edit-hidden" id="toggleEdit">Редактировать</button>
@@ -265,7 +265,8 @@
     const [AUTH_LOGIN, AUTH_PASS] = AUTH_DATA.split(':');
     
     let isAuthenticated = localStorage.getItem('screenshot_auth') === 'true';
-    
+    let db; // глобальная ссылка на экземпляр
+
     // Проверка авторизации
     function checkAuth() {
       const login = document.getElementById('loginInput').value;
@@ -277,8 +278,8 @@
         document.getElementById('authModal').style.display = 'none';
         document.getElementById('authToggle').textContent = '✅ Админ';
         document.getElementById('authToggle').classList.add('authenticated');
-        showEditMode(true);
-        if (window.db) window.db.render(); // Перерисовка если уже инициализировано
+        showEditMode(true); // показываем кнопки
+        if (db) db.render(); // если DB уже есть — перерисовка
       } else {
         document.getElementById('authError').style.display = 'block';
         setTimeout(() => document.getElementById('authError').style.display = 'none', 3000);
@@ -292,6 +293,14 @@
         el.classList.toggle('edit-hidden', !show);
         el.classList.toggle('edit-visible', show);
       });
+
+      // Вешаем обработчики только при авторизации
+      if (isAuthenticated && db) {
+        document.getElementById('toggleEdit').onclick = () => db.toggleEdit();
+        document.getElementById('openNewRow').onclick   = () => db.newForm();
+        document.getElementById('saveNewRow').onclick   = () => db.saveNew();
+        document.getElementById('cancelNewRow').onclick = () => db.cancelNew();
+      }
     }
     
     // Инициализация кнопки авторизации
@@ -301,7 +310,7 @@
         if (confirm('Выйти из админки?')) {
           localStorage.removeItem('screenshot_auth');
           isAuthenticated = false;
-          document.getElementById('authToggle').textContent = '🔐 Авторизация';
+          document.getElementById('authToggle').textContent = 'Авторизация';
           document.getElementById('authToggle').classList.remove('authenticated');
           showEditMode(false);
           document.getElementById('authModal').style.display = 'none';
@@ -318,17 +327,10 @@
         checkAuth();
       }
     });
-    
-    // Инициализация при загрузке
-    if (isAuthenticated) {
-      document.getElementById('authToggle').textContent = '✅ Админ';
-      document.getElementById('authToggle').classList.add('authenticated');
-      showEditMode(true);
-    }
 
     class ScreenshotDB {
       constructor() {
-        window.db = this; // Глобальная ссылка для checkAuth
+        db = this; // глобальная ссылка для checkAuth / showEditMode
         this.DB_NAME = 'github_screenshots_v1';
         this.data = this.load();
         this.editMode = false;
@@ -346,14 +348,18 @@
 
       init() {
         this.render();
+        
+        // обработчики для первой инициализации (если уже авторизован)
         if (isAuthenticated) {
-          document.getElementById('toggleEdit').onclick = () => this.toggleEdit();
-          document.getElementById('openNewRow').onclick = () => this.newForm();
-          document.getElementById('saveNewRow').onclick = () => this.saveNew();
-          document.getElementById('cancelNewRow').onclick = () => this.cancelNew();
+          document.getElementById('toggleEdit').onclick     = () => this.toggleEdit();
+          document.getElementById('openNewRow').onclick     = () => this.newForm();
+          document.getElementById('saveNewRow').onclick     = () => this.saveNew();
+          document.getElementById('cancelNewRow').onclick   = () => this.cancelNew();
         }
         
         document.getElementById('newPreviewBox').onclick = () => document.getElementById('newImageInput').click();
+        document.getElementById('newImageNotification').style.display = 'none';
+
         document.getElementById('newImageInput').onchange = (e) => {
           const file = e.target.files[0];
           if (file) {
@@ -402,7 +408,7 @@
         const desc = document.getElementById('newDescription').value.trim();
         const file = document.getElementById('newImageInput').files[0];
         
-        if (!title || !file) { this.status('⚠️ Название и скриншот обязательны'); return; }
+        if (!title || !file) { this.status('Название и скриншот обязательны'); return; }
 
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -507,6 +513,17 @@
     document.addEventListener('DOMContentLoaded', () => {
       new ScreenshotDB();
     });
+
+    // Инициализация после загрузки и проверки авторизации
+    (function initAfterAuth() {
+      if (isAuthenticated) {
+        document.getElementById('authToggle').textContent = 'Админ';
+        document.getElementById('authToggle').classList.add('authenticated');
+        showEditMode(true); // переключает кнопки и устанавливает onclick
+      } else {
+        showEditMode(false); // если не авторизован — скрыть кнопки
+      }
+    })();
   </script>
 </body>
 </html>
