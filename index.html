@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Класснеймы донат вещей</title>
+  <style>
+    :root {
+      --bg1: #050816;
+      --bg2: #0b1220;
+      --panel: rgba(10, 15, 30, 0.72);
+      --line: rgba(255, 255, 255, 0.08);
+      --text: #e5eefc;
+      --muted: #8ea0c0;
+      --accent: #7c3aed;
+      --accent2: #06b6d4;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+      --radius: 22px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; min-height: 100%; }
+    body {
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at 10% 10%, rgba(124, 58, 237, 0.22), transparent 24%), radial-gradient(circle at 90% 0%, rgba(6, 182, 212, 0.18), transparent 28%), linear-gradient(160deg, var(--bg1), var(--bg2));
+      min-height: 100vh; padding: 28px 16px 44px;
+    }
+    .wrap { max-width: 1800px; margin: 0 auto; }
+    
+    /* 🎯 СКРИНШОТЫ ОГРОМНЫЕ 500x300 */
+    .table-head { 
+      display: grid; 
+      grid-template-columns: 1.5fr 500px 2.5fr 140px;
+      border-bottom: 1px solid var(--line); 
+      background: rgba(255, 255, 255, 0.03); 
+      color: #f4f7ff; 
+      text-transform: uppercase; 
+      letter-spacing: 0.09em; 
+      font-size: 12px; 
+      font-weight: 800; 
+    }
+    .table-head div, .row > div { padding: 20px 16px; display: flex; align-items: center; min-height: 100%; }
+    .rows { display: flex; flex-direction: column; max-height: 75vh; overflow-y: auto; }
+    .row { 
+      border-bottom: 1px solid var(--line); 
+      background: rgba(255, 255, 255, 0.015); 
+      transition: all 0.2s ease; 
+      display: grid; 
+      grid-template-columns: 1.5fr 500px 2.5fr 140px;
+    }
+    
+    /* ✅ РЕДАКТИРУЕМОЕ НАЗВАНИЕ */
+    .title { 
+      font-size: 18px; 
+      font-weight: 800; 
+      line-height: 1.3; 
+      color: var(--accent); 
+      background: rgba(124, 58, 237, 0.15); 
+      padding: 12px 16px; 
+      border-radius: 12px; 
+      border: 2px solid rgba(124, 58, 237, 0.4);
+      min-height: 24px;
+    }
+    .title.editing {
+      background: rgba(6, 182, 212, 0.15);
+      border-color: var(--accent2);
+      padding: 10px 14px;
+    }
+    
+    /* 🖼️ ОГРОМНЫЕ СКРИНШОТЫ */
+    .thumb { 
+      width: 500px !important; 
+      height: 300px !important; 
+      object-fit: cover; 
+      border-radius: 20px; 
+      border: 2px solid rgba(255, 255, 255, 0.15); 
+      cursor: pointer; 
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4); 
+      transition: all 0.3s ease; 
+    }
+    .thumb:hover { 
+      transform: scale(1.02) !important; 
+      border-color: rgba(6, 182, 212, 0.7); 
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5); 
+    }
+    
+    .description { 
+      color: var(--text); 
+      font-size: 15px; 
+      line-height: 1.5; 
+      padding: 20px; 
+      background: rgba(255, 255, 255, 0.03); 
+      border-radius: 16px; 
+      border: 1px solid var(--line); 
+      white-space: pre-wrap; 
+      max-height: 120px; 
+      overflow-y: auto; 
+    }
+    .description:empty::before { content: "Класснеймы не указаны"; color: var(--muted); font-style: italic; }
+    
+    /* Остальной стиль */
+    .hero, .controls, button, .panel, .actions, .icon-btn { /* все стили кнопок и панелей остаются */ }
+    button { border: 0; border-radius: 16px; padding: 12px 18px; font: inherit; font-weight: 700; color: white; cursor: pointer; transition: all 0.18s ease; box-shadow: 0 12px 28px rgba(0, 0, 0, 0.24); }
+    button:hover { transform: translateY(-1px); }
+    .btn-edit { background: linear-gradient(135deg, #2563eb, #7c3aed); }
+    .btn-add { background: linear-gradient(135deg, #059669, #10b981); display: none; }
+    .btn-save { background: linear-gradient(135deg, #0ea5e9, #2563eb); display: none; }
+    .btn-cancel { background: linear-gradient(135deg, #ef4444, #f97316); display: none; }
+    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); backdrop-filter: blur(18px); }
+    .row:hover { background: rgba(255, 255, 255, 0.05); }
+    .actions { justify-content: flex-end; gap: 8px; }
+    .icon-btn { padding: 8px 12px; border-radius: 12px; font-size: 12px; font-weight: 800; box-shadow: none; }
+    .edit-row-btn { background: linear-gradient(135deg, #f59e0b, #f97316); }
+    .delete-row-btn { background: linear-gradient(135deg, #dc2626, #ef4444); }
+    
+    /* Форма */
+    .new-row { display: none; padding: 30px; background: rgba(255, 255, 255, 0.03); }
+    .new-row.active { display: block; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .field { display: flex; flex-direction: column; gap: 10px; }
+    .field label { color: var(--muted); font-size: 13px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+    .field input, .field textarea { width: 100%; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(6, 10, 20, 0.55); color: #fff; border-radius: 14px; padding: 16px; font: inherit; }
+    .field input:focus, .field textarea:focus { border-color: rgba(6, 182, 212, 0.7); box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.14); }
+    .field textarea { min-height: 140px; resize: vertical; }
+    .preview-box { height: 320px; border-radius: 20px; border: 2px dashed rgba(255, 255, 255, 0.18); background: rgba(255, 255, 255, 0.04); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; }
+    .preview-box:hover { border-color: rgba(6, 182, 212, 0.7); transform: translateY(-3px); }
+    .preview-box img { width: 100%; height: 100%; object-fit: cover; display: none; }
+    .hidden-file { display: none; }
+    .status { padding: 14px; border-radius: 12px; margin-top: 20px; font-size: 15px; display: none; }
+    .status.success { background: rgba(34, 197, 94, 0.2); border: 1px solid var(--success); color: var(--success); }
+    
+    /* Адаптивность */
+    @media (max-width: 1400px) { .table-head, .row { grid-template-columns: 1fr 420px 2fr 120px; } .thumb { width: 420px; height: 250px; } }
+    @media (max-width: 1100px) { .table-head, .row { grid-template-columns: 1fr 350px 2fr 120px; } .thumb { width: 350px; height: 210px; } }
+    @media (max-width: 920px) { 
+      .table-head, .row { grid-template-columns: 1fr; }
+      .form-grid { grid-template-columns: 1fr; }
+      .thumb { width: 100%; height: 300px; }
+      .preview-box { height: 280px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <div class="title-block">
+        <h1>Класснеймы донат вещей</h1>
+        <p>🖼️ Огромные скриншоты 500x300 • Редактирование названий • localStorage база</p>
+      </div>
+      <div class="controls">
+        <button class="btn-edit" id="toggleEdit">Редактировать</button>
+        <button class="btn-add" id="openNewRow">Добавить</button>
+        <button class="btn-save" id="saveNewRow">Сохранить</button>
+        <button class="btn-cancel" id="cancelNewRow">Отмена</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="table-head">
+        <div>Название</div><div>Скриншот</div><div>Класснеймы</div><div>Действия</div>
+      </div>
+
+      <div id="newRowForm" class="new-row">
+        <div class="form-grid">
+          <div class="field">
+            <label>Название *</label>
+            <input type="text" id="newTitle" placeholder="Название (можно редактировать)">
+          </div>
+          <div class="field">
+            <label>Скриншот *</label>
+            <div class="preview-box" id="newPreviewBox">
+              <span id="newPreviewText">Клик для загрузки</span>
+              <img id="newPreviewImg" alt="Предпросмотр">
+            </div>
+            <input class="hidden-file" type="file" id="newImageInput" accept="image/*">
+          </div>
+        </div>
+        <div class="field" style="grid-column: 1/-1; margin-top: 24px;">
+          <label>Класснеймы</label>
+          <textarea id="newDescription" placeholder="Введите класснеймы..."></textarea>
+        </div>
+        <div id="status" class="status"></div>
+      </div>
+
+      <div class="rows" id="rows"></div>
+    </div>
+  </div>
+
+  <script>
+    class ScreenshotDB {
+      constructor() {
+        this.DB_NAME = 'github_screenshots_v1';
+        this.data = this.load();
+        this.editMode = false;
+        this.init();
+      }
+
+      load() { try { return JSON.parse(localStorage.getItem(this.DB_NAME)) || []; } catch { return []; } }
+      save() { localStorage.setItem(this.DB_NAME, JSON.stringify(this.data)); this.status('✅ Сохранено!', 'success'); }
+
+      status(msg, type) {
+        const el = document.getElementById('status');
+        el.textContent = msg; el.className = `status ${type}`; el.style.display = 'block';
+        setTimeout(() => el.style.display = 'none', 2500);
+      }
+
+      init() {
+        this.render();
+        document.getElementById('toggleEdit').onclick = () => this.toggleEdit();
+        document.getElementById('openNewRow').onclick = () => this.newForm();
+        document.getElementById('saveNewRow').onclick = () => this.saveNew();
+        document.getElementById('cancelNewRow').onclick = () => this.cancelNew();
+        
+        document.getElementById('newPreviewBox').onclick = () => document.getElementById('newImageInput').click();
+        document.getElementById('newImageInput').onchange = (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+              document.getElementById('newPreviewImg').src = ev.target.result;
+              document.getElementById('newPreviewImg').style.display = 'block';
+              document.getElementById('newPreviewText').style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+          }
+        };
+      }
+
+      toggleEdit() {
+        this.editMode = !this.editMode;
+        document.getElementById('toggleEdit').textContent = this.editMode ? '✅ Завершить' : '✏️ Редактировать';
+        document.getElementById('openNewRow').style.display = this.editMode ? 'inline-flex' : 'none';
+        if (!this.editMode) this.cancelNew();
+      }
+
+      newForm() {
+        document.getElementById('newRowForm').classList.add('active');
+        document.getElementById('saveNewRow').style.display = 'inline-flex';
+        document.getElementById('cancelNewRow').style.display = 'inline-flex';
+        document.getElementById('newTitle').focus();
+      }
+
+      cancelNew() {
+        document.getElementById('newRowForm').classList.remove('active');
+        document.getElementById('saveNewRow').style.display = 'none';
+        document.getElementById('cancelNewRow').style.display = 'none';
+        this.resetForm();
+      }
+
+      resetForm() {
+        document.getElementById('newTitle').value = '';
+        document.getElementById('newDescription').value = '';
+        document.getElementById('newImageInput').value = '';
+        document.getElementById('newPreviewImg').style.display = 'none';
+        document.getElementById('newPreviewText').style.display = 'block';
+      }
+
+      saveNew() {
+        const title = document.getElementById('newTitle').value.trim();
+        const desc = document.getElementById('newDescription').value.trim();
+        const file = document.getElementById('newImageInput').files[0];
+        
+        if (!title || !file) { this.status('⚠️ Название и скриншот обязательны'); return; }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          this.data.push({ title, description: desc, image: e.target.result });
+          this.save(); this.render(); this.cancelNew();
+        };
+        reader.readAsDataURL(file);
+      }
+
+      render() {
+        const rows = document.getElementById('rows');
+        rows.innerHTML = this.data.length ? '' : '<div style="padding:60px;text-align:center;color:var(--muted);">Добавьте первый скриншот</div>';
+
+        this.data.forEach((item, i) => {
+          const row = document.createElement('div');
+          row.className = 'row';
+          row.innerHTML = `
+            <div class="name-cell"><div class="title cell-title" contentEditable="${this.editMode}">${this.escape(item.title)}</div></div>
+            <div><img class="thumb cell-image" src="${item.image}" alt="${item.title}">
+            <input class="hidden-file row-file" type="file" accept="image/*"></div>
+            <div><div class="description cell-description" contentEditable="false">${item.description||''}</div></div>
+            <div class="actions">
+              <button class="icon-btn edit-row-btn">Ред.</button>
+              <button class="icon-btn delete-row-btn">Удалить</button>
+            </div>`;
+          rows.appendChild(row);
+          this.bindRow(row, i, item);
+        });
+      }
+
+      bindRow(row, i, item) {
+        const title = row.querySelector('.cell-title');
+        const img = row.querySelector('.cell-image');
+        const file = row.querySelector('.row-file');
+        const edit = row.querySelector('.edit-row-btn');
+        const del = row.querySelector('.delete-row-btn');
+        const desc = row.querySelector('.cell-description');
+
+        // ✅ РЕДАКТИРОВАНИЕ НАЗВАНИЯ
+        title.onclick = () => { if (this.editMode) { title.contentEditable = true; title.focus(); } };
+        title.onblur = () => {
+          item.title = title.textContent.trim() || item.title;
+          title.contentEditable = false;
+          this.save();
+        };
+        title.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); title.blur(); } };
+
+        img.onclick = () => { if (this.editMode) file.click(); };
+        file.onchange = (e) => {
+          const f = e.target.files[0];
+          if (f) {
+            const r = new FileReader();
+            r.onload = (ev) => { this.data[i].image = ev.target.result; this.save(); img.src = ev.target.result; };
+            r.readAsDataURL(f);
+          }
+        };
+
+        edit.onclick = () => {
+          if (!this.editMode) return;
+          const editing = desc.contentEditable === 'true';
+          if (editing) {
+            this.data[i].description = desc.textContent.trim();
+            this.save();
+            desc.contentEditable = 'false';
+            edit.textContent = 'Ред.';
+          } else {
+            desc.contentEditable = 'true';
+            desc.focus();
+            edit.textContent = 'Сохранить';
+          }
+        };
+
+        del.onclick = () => {
+          if (confirm(`Удалить "${item.title}"?`)) {
+            this.data.splice(i, 1);
+            this.save();
+            this.render();
+          }
+        };
+      }
+
+      escape(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+    }
+
+    new ScreenshotDB();
+  </script>
+</body>
+</html>
