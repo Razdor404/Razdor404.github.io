@@ -6,14 +6,14 @@
   <title>Класснеймы донат вещей</title>
   <style>
     :root {
-      --bg1: #050816;
-      --bg2: #0b1220;
-      --panel: rgba(10, 15, 30, 0.72);
+      --bg1: #000000;
+      --bg2: #0a001a;
+      --panel: rgba(20, 0, 40, 0.85);
       --line: rgba(255, 255, 255, 0.08);
       --text: #e5eefc;
       --muted: #8ea0c0;
-      --accent: #7c3aed;
-      --accent2: #06b6d4;
+      --accent: #9d39fc;
+      --accent2: #8036f5;
       --success: #22c55e;
       --danger: #ef4444;
       --shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
@@ -24,23 +24,22 @@
     body {
       font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
       color: var(--text);
-      background: radial-gradient(circle at 10% 10%, rgba(124, 58, 237, 0.22), transparent 24%), radial-gradient(circle at 90% 0%, rgba(6, 182, 212, 0.18), transparent 28%), linear-gradient(160deg, var(--bg1), var(--bg2));
+      background: linear-gradient(160deg, #000000, #120030, #2b0077);
       min-height: 100vh; padding: 28px 16px 44px;
     }
     .wrap { max-width: 1800px; margin: 0 auto; }
     
-    /* КНОПКА АВТОРИЗАЦИИ СПРАВА */
     .auth-btn-fixed {
       position: fixed; top: 32px; right: 32px; z-index: 9999;
-      background: linear-gradient(135deg, var(--accent), #9333ea);
+      background: linear-gradient(135deg, var(--accent), #c46af7);
       border: 0; border-radius: 50px; padding: 16px 24px; 
       color: white; font: inherit; font-weight: 700; font-size: 14px;
-      box-shadow: 0 16px 40px rgba(124,58,237,0.4); cursor: pointer;
+      box-shadow: 0 16px 40px rgba(157, 57, 252, 0.45); cursor: pointer;
       transition: all 0.3s ease; backdrop-filter: blur(20px);
     }
     .auth-btn-fixed:hover { 
       transform: translateY(-4px) scale(1.05); 
-      box-shadow: 0 24px 60px rgba(124,58,237,0.6); 
+      box-shadow: 0 24px 60px rgba(157, 57, 252, 0.6); 
     }
     .auth-btn-fixed.authenticated {
       background: linear-gradient(135deg, var(--success), #16a34a);
@@ -54,7 +53,6 @@
       50% { box-shadow: 0 16px 40px rgba(34,197,94,0.7); }
     }
     
-    /* Модальное окно авторизации */
     .auth-modal {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
       background: rgba(0,0,0,0.9); z-index: 10000; display: none; 
@@ -68,28 +66,42 @@
     .auth-panel h2 { margin: 0 0 32px 0; color: var(--accent); font-size: 28px; }
     .auth-field { position: relative; margin-bottom: 24px; }
     .auth-field input {
-      width: 100%; border: 1px solid rgba(255,255,255,0.1); background: rgba(6,10,20,0.55); 
+      width: 100%; border: 1px solid rgba(255,255,255,0.1); background: rgba(20, 0, 40, 0.7); 
       color: #fff; border-radius: 14px; padding: 18px 20px; font-size: 16px; box-sizing: border-box;
     }
     .auth-field input:focus { 
-      border-color: var(--accent2); box-shadow: 0 0 0 3px rgba(6,182,212,0.14); outline: none; 
+      border-color: var(--accent2); box-shadow: 0 0 0 3px rgba(128,54,245,0.16); outline: none; 
     }
     .auth-btn {
       width: 100%; border: 0; border-radius: 16px; padding: 18px; font: inherit; font-weight: 700; 
-      color: white; cursor: pointer; background: linear-gradient(135deg, var(--accent2), #0891b2);
-      box-shadow: 0 12px 28px rgba(6,182,212,0.4); transition: all 0.2s ease;
+      color: white; cursor: pointer; background: linear-gradient(135deg, var(--accent2), #9d39fc);
+      box-shadow: 0 12px 28px rgba(128,54,245,0.45); transition: all 0.2s ease;
     }
-    .auth-btn:hover { transform: translateY(-2px); box-shadow: 0 16px 36px rgba(6,182,212,0.5); }
+    .auth-btn:hover { transform: translateY(-2px); box-shadow: 0 16px 36px rgba(128,54,245,0.55); }
     .auth-error { color: var(--danger); margin-top: 16px; font-size: 14px; display: none; }
     
-    /* Скрываем редактирование без авторизации */
     .edit-hidden { display: none !important; }
     .edit-visible { display: inline-flex !important; }
     
-    /* Основные стили */
+    .hero {
+      margin-bottom: 28px;
+    }
+    .hero h1 { margin: 0 0 8px 0; font-size: 28px; font-weight: 800; }
+    .hero p { margin: 0 0 0; color: var(--muted); font-size: 16px; }
+    
+    .controls {
+      margin-top: 16px;
+      display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+    }
+    .controls button {
+      padding: 10px 18px; font-size: 14px;
+    }
+
+    /* ✅ ИСПРАВЛЕННЫЙ table-head - заголовки РОВНО НАД ГРАФАМИ */
     .table-head { 
       display: grid; 
       grid-template-columns: 1.5fr 500px 2.5fr 140px;
+      padding: 18px 14px;
       border-bottom: 1px solid var(--line); 
       background: rgba(255, 255, 255, 0.03); 
       color: #f4f7ff; 
@@ -97,8 +109,22 @@
       letter-spacing: 0.09em; 
       font-size: 12px; 
       font-weight: 800; 
+      align-items: center;
     }
-    .table-head div, .row > div { padding: 20px 16px; display: flex; align-items: center; min-height: 100%; }
+    .table-head div {
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      letter-spacing: 0.1em;
+    }
+    .row > div { 
+      padding: 18px 14px; 
+      display: flex; 
+      align-items: center; 
+      min-height: 100%; 
+    }
     .rows { display: flex; flex-direction: column; max-height: 75vh; overflow-y: auto; }
     .row { 
       border-bottom: 1px solid var(--line); 
@@ -113,32 +139,74 @@
       font-weight: 800; 
       line-height: 1.3; 
       color: var(--accent); 
-      background: rgba(124, 58, 237, 0.15); 
+      background: rgba(157, 57, 252, 0.18); 
       padding: 12px 16px; 
       border-radius: 12px; 
-      border: 2px solid rgba(124, 58, 237, 0.4);
+      border: 2px solid rgba(157, 57, 252, 0.48); 
       min-height: 24px;
     }
     .title.editing {
-      background: rgba(6, 182, 212, 0.15);
+      background: rgba(80, 40, 160, 0.22);
       border-color: var(--accent2);
       padding: 10px 14px;
     }
     
+    .cell-title {
+      color: #eee9ee !important;
+    }
+    
     .thumb { 
-      width: 500px !important; 
-      height: 300px !important; 
+      width: 460px !important; 
+      height: 280px !important; 
       object-fit: cover; 
-      border-radius: 20px; 
+      border-radius: 18px; 
       border: 2px solid rgba(255, 255, 255, 0.15); 
-      cursor: pointer; 
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4); 
+      cursor: zoom-in; 
+      box-shadow: 0 16px 50px rgba(0, 0, 0, 0.4); 
       transition: all 0.3s ease; 
     }
     .thumb:hover { 
-      transform:scale(1.02) !important; 
-      border-color: rgba(6, 182, 212, 0.7); 
-      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5); 
+      transform:scale(1.015) !important; 
+      border-color: rgba(128,54,245,0.75); 
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.5); 
+    }
+    
+    /* LIGHTBOX – ПОЛНЫЙ ЭКРАН СКРИНШОТА */
+    .lightbox {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+      background: rgba(0,0,0,0.95); 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      z-index: 10001; 
+      opacity: 0; 
+      pointer-events: none; 
+      transition: opacity 0.3s ease;
+    }
+    .lightbox.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .lightbox img {
+      max-width: 90vw; 
+      max-height: 90vh; 
+      border-radius: 16px; 
+      box-shadow: 0 30px 100px rgba(0, 0, 0, 0.7);
+    }
+    .lightbox-close {
+      position: absolute; top: 40px; right: 40px; 
+      background: rgba(255,255,255,0.15); 
+      border-radius: 50%; 
+      width: 40px; height: 40px; 
+      display: flex; 
+      align-items: center; justify-content: center; 
+      cursor: pointer; 
+      color: #fff;
+      font-size: 24px; 
+      border: 0;
+    }
+    .lightbox-close:hover {
+      background: rgba(255,255,255,0.25);
     }
     
     .description { 
@@ -157,7 +225,7 @@
     
     button { border: 0; border-radius: 16px; padding: 12px 18px; font: inherit; font-weight: 700; color: white; cursor: pointer; transition: all 0.18s ease; box-shadow: 0 12px 28px rgba(0, 0, 0, 0.24); }
     button:hover { transform: translateY(-1px); }
-    .btn-edit { background: linear-gradient(135deg, #2563eb, #7c3aed); }
+    .btn-edit { background: linear-gradient(135deg, #2563eb, #9d39fc); }
     .btn-add { background: linear-gradient(135deg, #059669, #10b981); }
     .btn-save { background: linear-gradient(135deg, #0ea5e9, #2563eb); display: none; }
     .btn-cancel { background: linear-gradient(135deg, #ef4444, #f97316); display: none; }
@@ -173,36 +241,42 @@
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
     .field { display: flex; flex-direction: column; gap: 10px; }
     .field label { color: var(--muted); font-size: 13px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
-    .field input, .field textarea { width: 100%; border: 1px solid rgba(255,255,255,0.1); background: rgba(6,10,20,0.55); color: #fff; border-radius: 14px; padding: 16px; font: inherit; }
-    .field input:focus, .field textarea:focus { border-color: rgba(6,182,212,0.7); box-shadow: 0 0 0 3px rgba(6,182,212,0.14); }
+    .field input, .field textarea { width: 100%; border: 1px solid rgba(255,255,255,0.1); background: rgba(20, 0, 40, 0.7); color: #fff; border-radius: 14px; padding: 16px; font: inherit; }
+    .field input:focus, .field textarea:focus { border-color: rgba(128,54,245,0.75); box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.16); }
     .field textarea { min-height: 140px; resize: vertical; }
     .preview-box { height: 320px; border-radius: 20px; border: 2px dashed rgba(255, 255, 255, 0.18); background: rgba(255, 255, 255, 0.04); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; }
-    .preview-box:hover { border-color: rgba(6,182,212,0.7); transform: translateY(-3px); }
+    .preview-box:hover { border-color: rgba(128,54,245,0.75); transform: translateY(-3px); }
     .preview-box img { width: 100%; height: 100%; object-fit: cover; display: none; }
     .hidden-file { display: none; }
     .status { padding: 14px; border-radius: 12px; margin-top: 20px; font-size: 15px; display: none; }
     .status.success { background: rgba(34,197,94,0.2); border: 1px solid var(--success); color: var(--success); }
     
-    /* Адаптивность */
-    @media (max-width: 1400px) { .table-head, .row { grid-template-columns: 1fr 420px 2fr 120px; } .thumb { width: 420px; height: 250px; } }
-    @media (max-width: 1100px) { .table-head, .row { grid-template-columns: 1fr 350px 2fr 120px; } .thumb { width: 350px; height: 210px; } }
+    @media (max-width: 1400px) { 
+      .table-head, .row { grid-template-columns: 1fr 460px 2fr 120px; } 
+      .thumb { width: 420px; height: 260px; } 
+    }
+    @media (max-width: 1100px) { 
+      .table-head, .row { grid-template-columns: 1fr 380px 2fr 120px; } 
+      .thumb { width: 350px; height: 220px; } 
+    }
     @media (max-width: 920px) { 
       .table-head, .row { grid-template-columns: 1fr; }
       .form-grid { grid-template-columns: 1fr; }
-      .thumb { width: 100%; height: 300px; }
+      .thumb { width: 100%; height: 260px; }
       .preview-box { height: 280px; }
+      .row { grid-template-columns: 1fr; }
+      .table-head div, .row > div { padding: 16px 12px; }
       .auth-btn-fixed { top: 20px; right: 20px; padding: 14px 20px; font-size: 13px; }
+      .controls { flex-direction: column; align-items: flex-start; }
     }
   </style>
 </head>
 <body>
-  <!-- ✅ КНОПКА АВТОРИЗАЦИИ СПРАВА -->
   <button id="authToggle" class="auth-btn-fixed">Авторизация</button>
   
-  <!-- Модальное окно авторизации -->
   <div id="authModal" class="auth-modal">
     <div class="auth-panel">
-      <h2>🔐 Вход в админку</h2>
+      <h2>Вход в админку</h2>
       <div class="auth-field">
         <input type="text" id="loginInput" placeholder="Логин" maxlength="20">
       </div>
@@ -210,15 +284,21 @@
         <input type="password" id="passwordInput" placeholder="Пароль" maxlength="20">
       </div>
       <button class="auth-btn" onclick="checkAuth()">Войти</button>
-      <div id="authError" class="auth-error">Неверный логин или пароль!</div>
+      <div id="authError" class="auth-error">Неверный логин или пароль</div>
     </div>
+  </div>
+
+  <!-- LIGHTBOX ДЛЯ СКРИНШОТА (ПОЛНЫЙ ЭКРАН) -->
+  <div id="lightbox" class="lightbox">
+    <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
+    <img id="lightboxImg" alt="Скриншот">
   </div>
 
   <div class="wrap">
     <div class="hero">
       <div class="title-block">
         <h1>Класснеймы донат вещей</h1>
-        <p>🖼️ Огромные скриншоты 500x300 • Редактирование названий • localStorage база</p>
+        <p></p>
       </div>
       <div class="controls">
         <button class="btn-edit edit-hidden" id="toggleEdit">Редактировать</button>
@@ -230,17 +310,20 @@
 
     <div class="panel">
       <div class="table-head">
-        <div>Название        <div>Скриншот</div><div>Класснеймы</div><div>Действия</div>
+        <div>Название</div>
+        <div>Скриншот</div>
+        <div>Класснеймы</div>
+        <div></div>
       </div>
 
       <div id="newRowForm" class="new-row edit-hidden">
         <div class="form-grid">
          <div class="field">
-           <label>Название *</label>
+           <label>Название</label>
            <input type="text" id="newTitle" placeholder="Название (можно редактировать)">
          </div>
          <div class="field">
-           <label>Скриншот *</label>
+           <label>Скриншот</label>
            <div class="preview-box" id="newPreviewBox">
              <span id="newPreviewText">Клик для загрузки</span>
              <img id="newPreviewImg" alt="Предпросмотр">
@@ -260,14 +343,34 @@
   </div>
 
   <script>
-    // Скрытые учетные данные (base64)
-    const AUTH_DATA = atob('UmF6ZG9yOjIyODEzMzc='); // "Razdor:2281337"
+    const AUTH_DATA = atob('UmF6ZG9yOjIyODEzMzc=');
     const [AUTH_LOGIN, AUTH_PASS] = AUTH_DATA.split(':');
     
     let isAuthenticated = localStorage.getItem('screenshot_auth') === 'true';
-    let db; // глобальная ссылка на экземпляр
+    let db;
 
-    // Проверка авторизации
+    // LIGHTBOX: открытие скриншота на полный экран (ДОСТУПНО ВСЕМ)
+    const lightbox     = document.getElementById('lightbox');
+    const lightboxImg  = document.getElementById('lightboxImg');
+
+    function openLightbox(src) {
+      lightboxImg.src = src;
+      lightbox.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeLightbox() {
+      lightbox.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+    lightbox.onclick = (e) => {
+      if (e.target === lightbox) closeLightbox();
+    };
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && lightbox.classList.contains('active')) {
+        closeLightbox();
+      }
+    });
+
     function checkAuth() {
       const login = document.getElementById('loginInput').value;
       const pass = document.getElementById('passwordInput').value;
@@ -276,17 +379,16 @@
         localStorage.setItem('screenshot_auth', 'true');
         isAuthenticated = true;
         document.getElementById('authModal').style.display = 'none';
-        document.getElementById('authToggle').textContent = '✅ Админ';
+        document.getElementById('authToggle').textContent = 'Админ';
         document.getElementById('authToggle').classList.add('authenticated');
-        showEditMode(true); // показываем кнопки
-        if (db) db.render(); // если DB уже есть — перерисовка
+        showEditMode(true);
+        if (db) db.render();
       } else {
         document.getElementById('authError').style.display = 'block';
         setTimeout(() => document.getElementById('authError').style.display = 'none', 3000);
       }
     }
     
-    // Показать/скрыть режим редактирования
     function showEditMode(show) {
       const editElements = document.querySelectorAll('.edit-hidden');
       editElements.forEach(el => {
@@ -294,7 +396,6 @@
         el.classList.toggle('edit-visible', show);
       });
 
-      // Вешаем обработчики только при авторизации
       if (isAuthenticated && db) {
         document.getElementById('toggleEdit').onclick = () => db.toggleEdit();
         document.getElementById('openNewRow').onclick   = () => db.newForm();
@@ -303,14 +404,12 @@
       }
     }
     
-    // Инициализация кнопки авторизации
     document.getElementById('authToggle').onclick = () => {
       if (isAuthenticated) {
-        // Выход из аккаунта
         if (confirm('Выйти из админки?')) {
           localStorage.removeItem('screenshot_auth');
           isAuthenticated = false;
-          document.getElementById('authToggle').textContent = '🔐 Авторизация';
+          document.getElementById('authToggle').textContent = 'Авторизация';
           document.getElementById('authToggle').classList.remove('authenticated');
           showEditMode(false);
           document.getElementById('authModal').style.display = 'none';
@@ -321,7 +420,6 @@
       }
     };
     
-    // Enter для авторизации
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && document.getElementById('authModal').style.display !== 'none') {
         checkAuth();
@@ -330,7 +428,7 @@
 
     class ScreenshotDB {
       constructor() {
-        db = this; // глобальная ссылка для checkAuth / showEditMode
+        db = this;
         this.DB_NAME = 'github_screenshots_v1';
         this.data = this.load();
         this.editMode = false;
@@ -338,7 +436,7 @@
       }
 
       load() { try { return JSON.parse(localStorage.getItem(this.DB_NAME)) || []; } catch { return []; } }
-      save() { localStorage.setItem(this.DB_NAME, JSON.stringify(this.data)); this.status('✅ Сохранено!', 'success'); }
+      save() { localStorage.setItem(this.DB_NAME, JSON.stringify(this.data)); this.status('Сохранено', 'success'); }
 
       status(msg, type) {
         const el = document.getElementById('status');
@@ -349,7 +447,6 @@
       init() {
         this.render();
         
-        // обработчики для кнопок
         if (isAuthenticated) {
           document.getElementById('toggleEdit').onclick     = () => this.toggleEdit();
           document.getElementById('openNewRow').onclick     = () => this.newForm();
@@ -357,7 +454,6 @@
           document.getElementById('cancelNewRow').onclick   = () => this.cancelNew();
         }
 
-        // клик по превью → открывает file input
         const previewBox = document.getElementById('newPreviewBox');
         const fileInput  = document.getElementById('newImageInput');
 
@@ -386,7 +482,7 @@
 
       toggleEdit() {
         this.editMode = !this.editMode;
-        document.getElementById('toggleEdit').textContent = this.editMode ? '✅ Завершить' : '✏️ Редактировать';
+        document.getElementById('toggleEdit').textContent = this.editMode ? 'Завершить' : 'Редактировать';
         document.getElementById('openNewRow').style.display = this.editMode ? 'inline-flex' : 'none';
         if (!this.editMode) this.cancelNew();
       }
@@ -461,13 +557,16 @@
 
       bindRow(row, i, item) {
         const title = row.querySelector('.cell-title');
-        const img = row.querySelector('.cell-image');
-        const file = row.querySelector('.row-file');
-        const edit = row.querySelector('.edit-row-btn');
-        const del = row.querySelector('.delete-row-btn');
-        const desc = row.querySelector('.cell-description');
+        const img   = row.querySelector('.cell-image');
+        const file  = row.querySelector('.row-file');
+        const edit  = row.querySelector('.edit-row-btn');
+        const del   = row.querySelector('.delete-row-btn');
+        const desc  = row.querySelector('.cell-description');
 
-        // Редактирование названия только для авторизованных
+        // ✅ Lightbox работает ДЛЯ ВСЕХ пользователей
+        img.onclick = () => openLightbox(img.src);
+
+        // Остальной админ функционал только для авторизованных
         if (isAuthenticated) {
           title.onclick = () => { if (this.editMode) { title.contentEditable = true; title.focus(); } };
           title.onblur = () => {
@@ -477,7 +576,6 @@
           };
           title.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); title.blur(); } };
 
-          img.onclick = () => { if (this.editMode) file.click(); };
           file.onchange = (e) => {
             const f = e.target.files[0];
             if (!f) return;
@@ -526,12 +624,10 @@
       }
     }
 
-    // Запуск после загрузки DOM
     document.addEventListener('DOMContentLoaded', () => {
       new ScreenshotDB();
     });
 
-    // Инициализация интерфейса после проверки авторизации
     (function initAfterAuth() {
       if (isAuthenticated) {
         document.getElementById('authToggle').textContent = 'Админ';
