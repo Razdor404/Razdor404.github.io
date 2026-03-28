@@ -713,19 +713,27 @@ function checkAuth() {
   } else {
     error.style.display = 'block';
     setTimeout(() => error.style.display = 'none', 2500);
-  }// ТЕСТ GitHub API
+  }// 🧪 ТЕСТ GitHub API (добавь это!)
 async function testGitHub() {
   console.log('🧪 Тестируем GitHub API...');
   
-  // 1. Читаем data.json
-  const data = await GITHUB.fetchFile('data/data.json');
-  console.log('📖 Данные:', data);
-  
-  // 2. Тест записи
-  const testSave = await GITHUB.writeFile('data/data.json', [{test: 'ok'}], 'test save');
-  console.log('💾 Сохранение работает?', testSave);
-}
-// Запусти тест: testGitHub() в консоли F12
+  try {
+    // 1. Читаем data.json
+    const data = await GITHUB.fetchFile('data/data.json');
+    console.log('📖 Данные из data.json:', data);
+    
+    // 2. Тест записи
+    const testSave = await GITHUB.writeFile('data/data.json', [{test: 'ok', time: new Date().toISOString()}], 'test save');
+    console.log('💾 Сохранение работает?', testSave);
+    
+    if (testSave) {
+      console.log('✅ GitHub API РАБОТАЕТ!');
+    } else {
+      console.log('❌ Ошибка сохранения!');
+    }
+  } catch (error) {
+    console.error('💥 ОШИБКА:', error);
+  }
 }
 </script>
 </body>
