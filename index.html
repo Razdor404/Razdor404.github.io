@@ -352,7 +352,7 @@ const [AUTH_LOGIN, AUTH_PASS] = AUTH_DATA.split(':');
 const GITHUB = {
   OWNER:   "Razdor404",          
   REPO:    "screenshots",
-  TOKEN:   "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",     
+  TOKEN:   "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",     
   BRANCH:  "main",            
 
   async fetchFile(path) {
@@ -713,7 +713,19 @@ function checkAuth() {
   } else {
     error.style.display = 'block';
     setTimeout(() => error.style.display = 'none', 2500);
-  }
+  }// ТЕСТ GitHub API
+async function testGitHub() {
+  console.log('🧪 Тестируем GitHub API...');
+  
+  // 1. Читаем data.json
+  const data = await GITHUB.fetchFile('data/data.json');
+  console.log('📖 Данные:', data);
+  
+  // 2. Тест записи
+  const testSave = await GITHUB.writeFile('data/data.json', [{test: 'ok'}], 'test save');
+  console.log('💾 Сохранение работает?', testSave);
+}
+// Запусти тест: testGitHub() в консоли F12
 }
 </script>
 </body>
